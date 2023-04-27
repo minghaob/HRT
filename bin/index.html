@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Location Tracker</title>
+	<style>
+		.cell_location_table {
+			font-size: 14px;
+		}
+		.cell_location_table_header {
+			width : 300;
+			font-size: 16px;
+			background: lightgray;
+			text-align: center;
+		}
+	</style>
+</head>
+<body>
+	<div style="display:flex;height:95vh">
+		<div id="left" style="width: 750px;min-width: 750px;">
+			<h1 style="font-family: 'Open Sans', sans-serif;">Location Tracker</h1>
+			<button id="clear_button">Clear</button>
+			<button style="float: right;margin-left: 10px;" onclick="window.open('/img', '_blank');">View Input Image</button>
+			<p></p>
+			<table id="table" style="font-family: 'Open Sans', sans-serif;min-width: 750px;" class="cell_location_table"></table>
+			<br>
+			<h4 style="font-family: 'Open Sans', sans-serif;">Log</h4>
+			<div id="log" style="max-width: 750px; height: 200px; overflow-y: scroll; font-family: 'Open Sans', sans-serif; font-size: 14px;"></div>
+		</div>
+	</div>
+	<script>
+		const missable_locations_with_coord = [["Akkala Bridge Ruins", [3161.6,442.88,-1416.64], "MainField", "I-3", "3573443925"],
+			["Akkala Parade Ground Ruins", [3307.78,317.46,-1235.52], "MainField", "I-3", "4169987206"],
+			["Ancient Tree Stump", [-1111.99,170.44,430.91], "MainField", "D-5", "2055720666"],
+			["Aquame Bridge", [-1128.81,142.45,1017.05], "MainField", "D-5", "168988452"],
+			["Big Twin Bridge", [1673.11,107.36,2032.82], "MainField", "G-7", "428801574"],
+			["Dining Hall", [-120.9,212.28,-843.87], "MainField", "E-4", "1505266799"],
+			["Eagus Bridge", [969.69,129.13,942.83], "MainField", "F-5", "3866501475"],
+			["East Post Ruins", [17.56,110.03,1560.67], "MainField", "E-6", "541031818"],
+			["East Sokkala Bridge", [3860.81,346.24,-1095.11], "MainField", "I-3", "3513742046"],
+			["First Gatehouse", [-351.61,217.85,-830.25], "MainField", "E-4", "71280777"],
+			["Footrace Check-In", [-2638,282.34,-1175], "MainField", "C-3", "3131469625"],
+			["Gatepost Town Ruins", [-537.87,121.27,1445.48], "MainField", "E-6", "550221002"],
+			["Gerudo Canyon Pass", [-1665,95,2028], "MainField", "D-7", "3320178954"],
+			["Gerudo Desert Gateway", [-2924.12,153.42,2329.39], "MainField", "C-7", "819611197"],
+			["Gleeok Bridge", [-1310.03,111.74,786.85], "MainField", "D-5", "4042556308"],
+			["Goponga Village Ruins", [1580.16,109.8,312.15], "MainField", "G-5", "695191420"],
+			["Hebra Trailhead Lodge", [-3572.02,247.83,-2258.14], "MainField", "B-2", "4061632909"],
+			["Helmhead Bridge", [398.29,126.25,-1167.31], "MainField", "F-3", "1432744076"],
+			["Horse God Bridge", [596.95,172.65,3722.39], "MainField", "F-8", "1624998928"],
+			["Horwell Bridge", [680.19,111.37,977.87], "MainField", "F-5", "1077183920"],
+			["Hyrule Garrison Ruins", [-596.5,132.5,571.5], "MainField", "E-5", "2151660471"],
+			["Inogo Bridge", [2344.5,119.5,-247.89], "MainField", "H-4", "2926314663"],
+			["Jeddo Bridge", [-1689.86,205,130.84], "MainField", "D-5", "4058423319"],
+			["Kakariko Bridge", [1785,125.24,1532.91], "MainField", "G-6", "1222814989"],
+			["King's Study", [-172.98,170.46,-1119.39], "MainField", "E-4", "88775297"],
+			["Little Twin Bridge", [1714.18,106.66,2149.55], "MainField", "G-7", "556818935"],
+			["Lost Woods", [723,293.5,-1918.5], "MainField", "F-3", "2739177552"],
+			["Luto's Crossing", [3085.11,263.68,8.17], "MainField", "I-4", "712108954"],
+			["Mabe Village Ruins", [-48.5,133,175], "MainField", "E-5", "2558596911"],
+			["Maritta Exchange Ruins", [-1781.57,220,-1685.07], "MainField", "D-3", "2795964048"],
+			["Maw of Death Mountain", [2390.91,226.13,-1316.35], "MainField", "H-3", "2995611387"],
+			["Military Training Camp", [811.73,196.5,-1460.96], "MainField", "F-3", "2514262554"],
+			["Moat Bridge", [-613.17,128.63,-666.89], "MainField", "E-4", "810696328"],
+			["Moor Garrison Ruins", [1527.14,108.11,-187.2], "MainField", "G-4", "3794825850"],
+			["Observation Room", [-255.47,211.39,-764.95], "MainField", "E-4", "621025798"],
+			["Oren Bridge", [2875.32,187.5,32.6], "MainField", "H-5", "1225910604"],
+			["Orsedd Bridge", [517.11,135.39,-497.24], "MainField", "F-4", "1789516624"],
+			["Outpost Ruins", [-233.33,113.99,1671.11], "MainField", "E-6", "2161812055"],
+			["Owlan Bridge", [325.48,102.49,1273.41], "MainField", "F-6", "1876506981"],
+			["Pondo's Lodge", [-2076.7,389.7,-2080.9], "MainField", "D-2", "16838084"],
+			["Princess Zelda's Room", [-320.65,259.53,-995.61], "MainField", "E-4", "2331807833"],
+			["Princess Zelda's Study", [-383.72,273.58,-995.87], "MainField", "E-4", "2438220167"],
+			["Rauru Settlement Ruins", [704,144,-1251.5], "MainField", "F-3", "892945863"],
+			["Sarjon Bridge", [1025.15,130.03,3235.46], "MainField", "G-8", "465992488"],
+			["Second Gatehouse", [-159.88,241.75,-878.81], "MainField", "E-4", "1989071809"],
+			["Shadow Hamlet Ruins", [3053.78,438.86,-2299.47], "MainField", "I-2", "21506043"],
+			["Sherfin's Secret Hot Spring", [-4309.5,460.5,-3495], "MainField", "A-1", "1424066409"],
+			["Sokkala Bridge", [3686.27,341.42,-1004.02], "MainField", "I-3", "217688923"],
+			["Spring of Courage", [879.5,123,2388], "MainField", "F-7", "566422238"],
+			["Statue of the Eighth Heroine", [-4371.52,528.87,516.98], "MainField", "A-5", "3806281977"],
+			["Stolock Bridge", [1648.2,565.86,-2437.53], "MainField", "G-2", "3546331749"],
+			["Sturnida Secret Hot Spring", [-4080.5,173,-2720], "MainField", "A-2", "1738813548"],
+			["Tabantha Great Bridge", [-3116.78,274.3,-581.71], "MainField", "B-4", "2640716468"],
+			["Tanagar Canyon Course", [-3119.2,-0.58,-627.77], "MainField", "B-4", "915070330"],
+			["Water Reservoir", [-596.67,130.98,-525.32], "MainField", "E-4", "1251237981"],
+			["Zonai Ruins", [889.86,124.08,2937.35], "MainField", "F-7", "3185518635"]];
+		const other_detectable_locations_with_coord = [["Akkala Citadel Ruins", [3303,451.6,-1502.5], "MainField", "I-3", "1222881184"],
+			["Akkala Span", [3009.35,401.17,-1231.56], "MainField", "I-3", "2844617485"],
+			["Ancient Columns", [-3578.31,381.87,-432.16], "MainField", "B-4", "1222414543"],
+			["Arbiter's Grounds", [-4152.77,113.59,3820.07], "MainField", "A-8", "2871161966"],
+			["Boneyard Bridge", [270.29,129.66,-711.89], "MainField", "F-4", "1861179817"],
+			["Bridge of Eldin", [2210.35,632.96,-2349.67], "MainField", "H-2", "2491076892"],
+			["Bridge of Hylia", [-37.41,161.84,2518.48], "MainField", "E-7", "1606688844"],
+			["Carok Bridge", [-1087.79,145,-474.61], "MainField", "D-4", "2088437894"],
+			["Castle Town Prison", [-676.79,122.38,-836.98], "MainField", "E-4", "3849923068"],
+			["Castle Town Watchtower", [80.5,142.15,-410.96], "MainField", "E-4", "1167914529"],
+			["Central Square", [-253.99,129.85,-425.96], "MainField", "E-4", "2960289005"],
+			["Coliseum Ruins", [-1151,135,1262.5], "MainField", "D-6", "3598198003"],
+			["Deya Village Ruins", [356.82,168.73,1954.54], "MainField", "F-7", "2882708526"],
+			["Digdogg Suspension Bridge", [-1710,160,1778], "MainField", "D-6", "1347258038"],
+			["Docks", [-243,126.45,-1181.7], "MainField", "E-4", "2703722451"],
+			["Dragon Bone Mire", [-4176,266.5,-1728.5], "MainField", "A-3", "1630062370"],
+			["East Gerudo Ruins", [-2691.1,51.5,2813.2], "MainField", "C-7", "474811878"],
+			["East Passage", [-108,134.78,-975.37], "MainField", "E-4", "3117435143"],
+			["East Reservoir Lake", [3662.87,259.18,-156.73], "MainField", "I-4", "1901925950"],
+			["Eldin Great Skeleton", [1517.38,209.04,-3703.94], "MainField", "G-1", "819398472"],
+			["Eventide Island", [4410.84,118.16,3534.02], "MainField", "J-8", "2022923928"],
+			["Exchange Ruins", [-1781.57,220,-1685.07], "MainField", "D-3", "2795964048"],
+			["Faron Woods", [413.53,111.52,3030.39], "MainField", "F-8", "406429123"],
+			["Floret Sandbar", [853.6,109.8,837.3], "MainField", "F-5", "3666754635"],
+			["Floria Bridge", [1731.43,169.76,3454.84], "MainField", "G-8", "2015240648"],
+			["Fort Hateno", [2323.95,117.07,1837.39], "MainField", "H-6", "3460665035"],
+			["Gerudo Great Skeleton", [-4863.96,146.09,3804.65], "MainField", "A-8", "705652772"],
+			["Gerudo Town", [-3844.5,194.5,2925], "MainField", "B-7", "907432771"],
+			["Gisa Crater", [-3931.32,210.53,-1089.51], "MainField", "B-3", "1103089767"],
+			["Goflam's Secret Hot Spring", [-3461.5,472,-3557.5], "MainField", "B-1", "996078807"],
+			["Goron City", [1680,495,-2445], "MainField", "G-2", "1149364027"],
+			["Great Plateau", [-1437.27,316.69,1995.57], "MainField", "D-6", "2838455725"],
+			["Guards' Chamber", [-370.2,180.88,-846.07], "MainField", "E-4", "2684227038"],
+			["Guchini Plain Barrows", [1004.24,144.44,3456.96], "MainField", "F-8", "3175964053"],
+			["Gut Check Rock", [2685.93,402.05,-3471.15], "MainField", "H-1", "3232781338"],
+			["Hateno Ancient Tech Lab", [3777.71,355.49,2127.36], "MainField", "I-7", "3974024957"],
+			["Hateno Village", [3683.18,239.1,2079.31], "MainField", "I-7", "482221012"],
+			["Hebra Great Skeleton", [-3973.84,306.7,-3708.25], "MainField", "A-1", "3911969703"],
+			["Hyrule Castle", [-253.5,139,-379], "MainField", "E-4", "1514051414"],
+			["Hyrule Castle Town Ruins", [-253.5,139,-379], "MainField", "E-4", "1514051414"],
+			["Hyrule Cathedral", [80.04,139.85,-628.25], "MainField", "E-4", "633357162"],
+			["Hyrule Forest Park", [192.42,135.46,-937.75], "MainField", "E-4", "2723498370"],
+			["Kakariko Village", [1852.77,227.8,987.26], "MainField", "G-6", "373764853"],
+			["Kara Kara Bazaar", [-3239.28,140.36,2569.85], "MainField", "B-7", "2995542954"],
+			["Kolomo Garrison Ruins", [-464.39,141.44,1272.55], "MainField", "E-6", "1990969724"],
+			["Korok Forest", [433.82,268.45,-2208.08], "MainField", "F-2", "2484897034"],
+			["Lanayru Promenade", [2718.19,161.39,1116.64], "MainField", "H-6", "233621871"],
+			["Lanayru Road - East Gate", [3157.37,241.79,1156.32], "MainField", "I-6", "3915175714"],
+			["Lanayru Road - West Gate", [2283.39,218.51,768.77], "MainField", "H-5", "315535086"],
+			["Library", [-157.47,170.36,-1065.5], "MainField", "E-4", "127180198"],
+			["Lockup", [-444.4,135.41,-1066.27], "MainField", "E-4", "2975892674"],
+			["Lomei Labyrinth Island", [4654.1,122.1,-3650.3], "MainField", "J-1", "1055895214"],
+			["Lurelin Village", [2868.8,100.1,3450.5], "MainField", "H-8", "2552739998"],
+			["Manhala Bridge", [-1610.57,128.57,1016.8], "MainField", "D-6", "3405201229"],
+			["Mounted Archery Camp", [-210.76,133.55,3484.7], "MainField", "E-8", "1576813044"],
+			["North Lomei Labyrinth", [-825.4,299.7,-3532], "MainField", "E-1", "1175965786"],
+			["Northern Icehouse", [-3748.94,157.82,2290.91], "MainField", "B-7", "1721882461"],
+			["Palmorae Ruins", [3462.3,103.8,3378.54], "MainField", "I-8", "1852538881"],
+			["Proxim Bridge", [207.06,105.32,1604.39], "MainField", "F-6", "2547960866"],
+			["Rebonae Bridge", [823.57,135.18,20.51], "MainField", "F-5", "4261341566"],
+			["Rito Village", [-3620.76,288.67,-1799.82], "MainField", "B-3", "322611648"],
+			["Royal Ancient Lab Ruins", [-1265,220,-1030], "MainField", "D-3", "2573827901"],
+			["Sacred Ground Ruins", [-254,125.5,-97.5], "MainField", "E-4", "4208674955"],
+			["Sage Temple Ruins", [-1355,115,233], "MainField", "D-5", "3023936519"],
+			["Sanctum", [-254.03,294.84,-1024.13], "MainField", "E-4", "1536835339"],
+			["Sand-Seal Rally", [-3776.82,145.52,3110.48], "MainField", "B-8", "429410516"],
+			["Sanidin Park Ruins", [-1629.73,240,688.02], "MainField", "D-5", "4208946363"],
+			["Selmie's Spot", [-2951.8,676.1,-3142.4], "MainField", "C-1", "3093037477"],
+			["Shrine of Resurrection", [-1099.1,242,1876.31], "MainField", "D-6", "3727647422"],
+			["South Lomei Labyrinth", [-1794.2,160.1,3457.6], "MainField", "D-8", "4207191008"],
+			["Spring of Power", [3756.13,150.56,-2672.14], "MainField", "I-2", "507761646"],
+			["Spring of Wisdom", [3926.44,577.49,1335.47], "MainField", "I-6", "1757397781"],
+			["Tabantha Village Ruins", [-2324,377,-1895], "MainField", "C-3", "629863787"],
+			["Tarrey Town", [3964.3,235.62,-1612.21], "MainField", "I-3", "2770146072"],
+			["Temple of Time", [-813.55,222,1978.16], "MainField", "E-6", "1024511641"],
+			["Thims Bridge", [1285.27,127,-691.94], "MainField", "G-4", "2005666400"],
+			["Thundra Plateau", [-2243.4,1007,-960.1], "MainField", "C-4", "2227463596"],
+			["Warbler's Nest", [-3994.79,275,-1734.3], "MainField", "B-3", "39745603"],
+			["West Passage", [-466,134.78,-848.87], "MainField", "E-4", "3299534349"],
+			["West Sokkala Bridge", [3591.52,346.29,-1020.13], "MainField", "I-3", "4003531635"],
+			["Zora's Domain", [3321.55,241.76,-502.42], "MainField", "I-4", "2882082782"]];
+		const STORAGE_KEY = "botw-lt.location_first_seen_time";
+		var location_first_seen_time = new Object();
+
+		function storeFirstSeenTime() {
+			localStorage.setItem(STORAGE_KEY, JSON.stringify(location_first_seen_time));
+		}
+
+		function loadFirstSeenTime() {
+			var data = localStorage.getItem(STORAGE_KEY);
+			if (data)
+			{
+				var stored_first_seen_time = JSON.parse(data);
+				for (var key in stored_first_seen_time){
+					var value = stored_first_seen_time[key];
+					activateLocation(key, value, false);
+				}
+			}
+		}
+
+		function getCurrentTime() {
+			const now = new Date();
+			const hours = now.getHours().toString().padStart(2, '0');
+			const minutes = now.getMinutes().toString().padStart(2, '0');
+			const seconds = now.getSeconds().toString().padStart(2, '0');
+
+			return `${hours}:${minutes}:${seconds}`;
+		}
+
+		const log_element = document.getElementById('log');
+
+		function logMessage(message) {
+			const message_element = document.createElement('div');
+			message_element.textContent = getCurrentTime() + ': ' + message;
+			var cur_time_str = new Date().getTime().toString();
+			message_element.setAttribute('first_frame_time', cur_time_str);
+			message_element.setAttribute('last_frame_time', cur_time_str);
+			message_element.setAttribute('message', message);
+			if (log_element.childNodes.length % 2 == 1)
+				message_element.style.backgroundColor = 'rgb(237,237,238)';
+			log_element.appendChild(message_element);
+
+			// Scroll to the bottom of the log element
+			log_element.scrollTop = log_element.scrollHeight;
+
+			return message_element;
+		}
+
+		let last_location_log;
+		function logLocation(location_name) {
+			if (last_location_log) {
+				var last_msg = last_location_log.getAttribute('message');
+				if (last_msg == location_name) {
+					var last_frame_time = last_location_log.getAttribute('last_frame_time');
+					if (last_frame_time) {
+						var cur_time = new Date().getTime();
+						if (Number(last_frame_time) > cur_time - 2000) {
+							last_location_log.setAttribute('last_frame_time', cur_time.toString());
+							return;
+						}
+					}
+				}
+			}
+			last_location_log = logMessage(location_name);
+		}
+
+		function locationCellOnMouseOver(event) {
+			if (location_first_seen_time && event.target.id in location_first_seen_time)
+			{
+				var first_seen_time = location_first_seen_time[event.target.id];
+				let time_elapsed = Math.floor((new Date().getTime() - first_seen_time) / 1000 + 0.5);
+				let str = time_elapsed % 60 + 's';
+				time_elapsed = Math.floor(time_elapsed / 60);
+				if (time_elapsed > 0)
+					str = time_elapsed % 60 + 'm' + str;
+				time_elapsed = Math.floor(time_elapsed / 60);
+				if (time_elapsed > 0)
+					str = time_elapsed + 'h' + str;
+				event.target.title = str + ' ago';
+			}
+		};
+
+		function activateLocation(location_name, first_seen_time, should_store) {
+			// Get the table cell element by ID
+			const cell = document.getElementById(location_name);
+
+			// Set the background color to green
+			if (cell)
+			{
+				if (location_first_seen_time && location_name in location_first_seen_time)
+					return;
+				location_first_seen_time[location_name] = first_seen_time;
+				if (should_store)
+					storeFirstSeenTime();
+				cell.style.backgroundColor = 'lightgreen';
+			}
+		}
+
+		function deactivateLocation(location_name) {
+			// Get the table cell element by ID
+			const cell = document.getElementById(location_name);
+
+			// Set the background color to green
+			if (cell)
+			{
+				cell.style.backgroundColor = cell.getAttribute('bgcolor');
+				cell.title = '';
+			}
+		}
+
+		function genObjmapLink(item) {
+			return "https://objmap.zeldamods.org/#/map/z6," + item[1][0].toString() + ',' + item[1][2].toString() + '?id=' + item[2] + ',' + item[3] + ',' + item[4];
+		}
+
+		function initLocationTable() {
+			const table = document.getElementById('table');
+			let len = Math.ceil(Math.max(missable_locations_with_coord.length, other_detectable_locations_with_coord.length) / 2);
+			// Create header row
+			{
+				const row = document.createElement('tr');
+				cell = document.createElement('td');
+				cell.textContent = "Missable locations";
+				cell.colSpan = 2;
+				cell.classList.add("cell_location_table_header");
+				row.appendChild(cell);
+
+				cell = document.createElement('td');
+				cell.textContent = "Other detectable locations";
+				cell.colSpan = 2;
+				cell.classList.add("cell_location_table_header");
+
+				row.appendChild(cell);
+				table.appendChild(row);
+			}
+			// create the content rows
+			for (let i = 0; i < len; i++) {
+				const row = document.createElement('tr');
+				for (let j = 0; j < 4; j++) {
+					cell = document.createElement('td');
+					cell.classList.add("cell_location_table");
+					row.appendChild(cell);
+				}
+				table.appendChild(row);
+			}
+			// fill the location names
+			for (let i = 0; i < missable_locations_with_coord.length; i++) {
+				const cell = table.rows[Math.floor(i / 2) + 1].cells[i % 2];
+				var link = document.createElement('a');
+				var url = genObjmapLink(missable_locations_with_coord[i]);
+				link.href =  url;
+				link.target = '_blank'; // Open link in a new tab
+				link.textContent = missable_locations_with_coord[i][0];
+				cell.appendChild(link);
+
+				cell.onmouseover = locationCellOnMouseOver;
+				if ((i + 1) % 4 > 1)
+					cell.style.backgroundColor = 'rgb(237,237,238)';
+				cell.setAttribute('id', missable_locations_with_coord[i][0]);
+				cell.setAttribute('objmap_url', url);
+				cell.setAttribute('bgcolor', cell.style.backgroundColor);
+			}
+			for (let i = 0; i < other_detectable_locations_with_coord.length; i++) {
+				const cell = table.rows[Math.floor(i / 2) + 1].cells[i % 2 + 2];
+				var link = document.createElement('a');
+				var url = genObjmapLink(other_detectable_locations_with_coord[i]);
+				link.href =  url;
+				link.target = '_blank'; // Open link in a new tab
+				link.textContent = other_detectable_locations_with_coord[i][0];
+				cell.appendChild(link);
+
+				cell.onmouseover = locationCellOnMouseOver;
+				if ((i + 1) % 4 > 1)
+					cell.style.backgroundColor = 'rgb(237,237,238)';
+				cell.setAttribute('id', other_detectable_locations_with_coord[i][0]);
+				cell.setAttribute('objmap_url', url);
+				cell.setAttribute('bgcolor', cell.style.backgroundColor);
+			}
+		}
+
+		initLocationTable();
+
+		loadFirstSeenTime();
+
+	    // add a click event listener to the button
+    	document.getElementById("clear_button").onclick = function() {
+			for (var key in location_first_seen_time) {
+				deactivateLocation(key);
+			}
+			location_first_seen_time = {};
+			localStorage.removeItem(STORAGE_KEY);
+		};
+
+		// Connect to WebSocket server
+		let socket_connected = false;
+		const socket = new WebSocket('ws://localhost:12178/data');
+
+		// When a message is received
+		socket.onmessage = function(event) {
+			const message = event.data;
+			logLocation(message);
+			activateLocation(message, new Date().getTime(), true);
+		};
+		socket.onclose = function(event) {
+			if (socket_connected)
+				logMessage('Connection to "' + socket.url + '" closed');
+			else
+				logMessage('Connection to "' + socket.url + '" cannot be established');
+			socket_connected = false;
+		};
+		socket.onopen = function(event) {
+			socket_connected = true;
+			logMessage('Connected to "' + socket.url + '"');
+		};
+		
+	</script>
+
+</body>
+</html>

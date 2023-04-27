@@ -1,0 +1,9 @@
+/.vs/
+/x64/
+/HRT.vcxproj.user
+/HRT.args.json
+*.pdb
+*.exe
+*.dll
+/bin/run.bat
+/ffmpeg/
