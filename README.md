@@ -9,6 +9,7 @@ HRT is a tools to track visited locations in a 100% run of BotW. It works by mon
 > Support of other OSs and in-game languages can be added if there's demand.
 
 ## How to Use
+Check [here](https://www.youtube.com/watch?v=sGRodAIGf-c) for a video demo.
 
 ### Installation
 Download the release package and extract its contents to an arbitrary folder.
