@@ -293,6 +293,12 @@ int main(int argc, char* argv[])
 			return 0;
 
 		std::cout << "Running in video file mode" << std::endl;
+
+		HANDLE hConsole = ::GetStdHandle(STD_OUTPUT_HANDLE);
+		::SetConsoleTextAttribute(hConsole, 10);
+		std::cout << "Run \"webui.bat\" to start the web-ui" << std::endl;
+		::SetConsoleTextAttribute(hConsole, 7);
+
 		AnalyseVideo(video_file_name, cv::Rect(bbox_x, bbox_y, bbox_w, bbox_h), frame_start, num_frame, output_file_name, brightness_threshold, bright_pixel_ratio_low, bright_pixel_ratio_high);
 	}
 	else
